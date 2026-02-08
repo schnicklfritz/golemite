@@ -7,16 +7,22 @@ FROM archlinux:latest AS base
 RUN sed -i 's/#NoExtract/NoExtract/' /etc/pacman.conf && \
     sed -i '/NoExtract/ s/$/ usr\/share\/help\/* usr\/share\/doc\/* usr\/share\/man\/* usr\/share\/locale\/*/' /etc/pacman.conf
 
-# Core Dependencies
-RUN pacman -Syu --noconfirm && \
+# Core Dependencies (Corrected)
+# 1. Initialize keyring (Fixes "no secret key" error)
+# 2. Update keyring specifically first
+# 3. Update system (-Su)
+# 4. Install packages using Arch-specific names
+RUN pacman-key --init && \
+    pacman-key --populate archlinux && \
+    pacman -Sy --noconfirm archlinux-keyring && \
+    pacman -Su --noconfirm && \
     pacman -S --noconfirm \
-    xorg-server xvfb x11vnc \
+    xorg-server xorg-server-xvfb x11vnc \
     chromium ttf-liberation ttf-dejavu \
     python python-pip \
     supervisor \
-    netcat-openbsd \
+    openbsd-netcat \
     && pacman -Scc --noconfirm
-
 # Common Setup
 RUN useradd -m -G video golem
 WORKDIR /home/golem
