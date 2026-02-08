@@ -3,15 +3,12 @@
 # ==========================================
 FROM archlinux:latest AS base
 
-# Optimization: Diet Arch (No Docs/Locales) to save space
+# Optimization: Diet Arch (No Docs)
 RUN sed -i 's/#NoExtract/NoExtract/' /etc/pacman.conf && \
     sed -i '/NoExtract/ s/$/ usr\/share\/help\/* usr\/share\/doc\/* usr\/share\/man\/* usr\/share\/locale\/*/' /etc/pacman.conf
 
-# Core Dependencies (Corrected)
-# 1. Initialize keyring (Fixes "no secret key" error)
-# 2. Update keyring specifically first
-# 3. Update system (-Su)
-# 4. Install packages using Arch-specific names
+# Core Dependencies (Corrected Keyrings & Package Names)
+# 1. Init Keys -> 2. Sync DB -> 3. Install packages
 RUN pacman-key --init && \
     pacman-key --populate archlinux && \
     pacman -Sy --noconfirm archlinux-keyring && \
@@ -23,6 +20,7 @@ RUN pacman-key --init && \
     supervisor \
     openbsd-netcat \
     && pacman -Scc --noconfirm
+
 # Common Setup
 RUN useradd -m -G video golem
 WORKDIR /home/golem
@@ -50,15 +48,15 @@ RUN chmod +x /home/golem/scripts/*.sh && chmod +x /home/golem/scripts/*.py
 # ==========================================
 FROM base AS kiosk
 
-# Install ONLY Kiosk window manager
-RUN pacman -S --noconfirm matchbox-window-manager && pacman -Scc --noconfirm
+# Install Openbox (Replaces Matchbox)
+RUN pacman -S --noconfirm openbox && pacman -Scc --noconfirm
 
 # Set Envs for Zero Config
-ENV DESKTOP_ENV=matchbox-window-manager \
+# Openbox is light and stays out of the way
+ENV DESKTOP_ENV=openbox \
     SETUP_WIZARD=false
 
 USER golem
-# 6080=VNC-Web, 5900=Raw-VNC, 8000=FileServer
 EXPOSE 6080 5900 8000
 ENTRYPOINT ["/home/golem/scripts/entrypoint.sh"]
 
@@ -67,7 +65,7 @@ ENTRYPOINT ["/home/golem/scripts/entrypoint.sh"]
 # ==========================================
 FROM base AS desktop
 
-# Install Power User Tools
+# Install Power User Tools (Fluxbox, Rclone, Zenity, etc)
 RUN pacman -S --noconfirm \
     fluxbox \
     rclone \
@@ -79,7 +77,7 @@ RUN pacman -S --noconfirm \
     xterm \
     && pacman -Scc --noconfirm
 
-# Install UV (fast python) and Watchdog
+# Install UV & Watchdog
 RUN pip install --break-system-packages uv watchdog
 
 # Set Envs for Advanced Mode
