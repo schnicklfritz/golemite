@@ -24,9 +24,19 @@ if [ ! -z "$VNC_PASSWORD" ]; then
 fi
 export VNC_AUTH_FLAG
 
-# --- 3. Desktop Selection ---
-# Switches command in supervisor based on env
-sed -i "s|%WM_COMMAND%|$DESKTOP_ENV|" /etc/supervisord.conf
+# --- 3. Set Window Manager Command ---
+case "$DESKTOP_ENV" in
+    "fluxbox")
+        WM_COMMAND="fluxbox"
+        ;;
+    "openbox")
+        WM_COMMAND="openbox"
+        ;;
+    *)
+        WM_COMMAND="fluxbox"  # Default fallback
+        ;;
+esac
+export WM_COMMAND
 
 # --- 4. Launch ---
 echo "✅ Golem Satellite Started."

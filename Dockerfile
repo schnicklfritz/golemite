@@ -4,8 +4,8 @@
 FROM archlinux:latest AS base
 
 # Optimization: Diet Arch (No Docs)
-RUN sed -i 's/#NoExtract/NoExtract/' /etc/pacman.conf && \
-    sed -i '/NoExtract/ s/$/ usr\/share\/help\/* usr\/share\/doc\/* usr\/share\/man\/* usr\/share\/locale\/*/' /etc/pacman.conf
+RUN echo 'NoExtract = usr/share/help/* usr/share/doc/* usr/share/man/* usr/share/locale/*' > /etc/pacman.d/noextract.conf && \
+    echo 'Include = /etc/pacman.d/noextract.conf' >> /etc/pacman.conf
 
 # Core Dependencies (Corrected Keyrings & Package Names)
 # 1. Init Keys -> 2. Sync DB -> 3. Install packages
@@ -26,8 +26,11 @@ RUN useradd -m -G video golem
 WORKDIR /home/golem
 ENV DISPLAY=:0 \
     RESOLUTION=1280x720 \
-    DOWNLOAD_DIR=/workspace
-
+    DOWNLOAD_DIR=/workspace \
+    WM_COMMAND=fluxbox \
+    VNC_AUTH_FLAG="" \
+    DESKTOP_ENV=fluxbox
+ 
 # Structure
 RUN mkdir -p /home/golem/.config/chromium \
     /home/golem/scripts \
@@ -55,6 +58,7 @@ RUN pacman -S --noconfirm openbox && pacman -Scc --noconfirm
 # Openbox is light and stays out of the way
 ENV DESKTOP_ENV=openbox \
     SETUP_WIZARD=false
+    WM_COMMAND=openbox
 
 USER golem
 EXPOSE 6080 5900 8000
@@ -83,7 +87,8 @@ RUN pip install --break-system-packages uv watchdog
 # Set Envs for Advanced Mode
 ENV DESKTOP_ENV=fluxbox \
     SETUP_WIZARD=true \
-    VNC_PASSWORD=""
+    VNC_PASSWORD="" \
+    WM_COMMAND=fluxbox
 
 # Add Desktop Scripts
 COPY --chown=golem:golem scripts/panic_button.sh /home/golem/scripts/
