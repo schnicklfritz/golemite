@@ -57,7 +57,7 @@ RUN pacman -S --noconfirm openbox && pacman -Scc --noconfirm
 # Set Envs for Zero Config
 # Openbox is light and stays out of the way
 ENV DESKTOP_ENV=openbox \
-    SETUP_WIZARD=false
+    SETUP_WIZARD=false \
     %WM_COMMAND%=openbox
 
 USER golem
