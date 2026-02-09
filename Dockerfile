@@ -27,7 +27,7 @@ WORKDIR /home/golem
 ENV DISPLAY=:0 \
     RESOLUTION=1280x720 \
     DOWNLOAD_DIR=/workspace \
-    %WM_COMMAND%=fluxbox \
+    WM_COMMAND=fluxbox \
     VNC_AUTH_FLAG="" \
     DESKTOP_ENV=fluxbox
  
@@ -58,7 +58,7 @@ RUN pacman -S --noconfirm openbox && pacman -Scc --noconfirm
 # Openbox is light and stays out of the way
 ENV DESKTOP_ENV=openbox \
     SETUP_WIZARD=false \
-    %WM_COMMAND%=openbox
+    WM_COMMAND=openbox
 
 USER golem
 EXPOSE 6080 5900 8000
@@ -88,7 +88,7 @@ RUN pip install --break-system-packages uv watchdog
 ENV DESKTOP_ENV=fluxbox \
     SETUP_WIZARD=true \
     VNC_PASSWORD="" \
-    %WM_COMMAND%=fluxbox
+    WM_COMMAND=fluxbox
 
 # Add Desktop Scripts
 COPY --chown=golem:golem scripts/panic_button.sh /home/golem/scripts/
