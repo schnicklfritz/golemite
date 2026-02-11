@@ -13,7 +13,7 @@ RUN pacman-key --init && \
     pacman -Sy --noconfirm archlinux-keyring && \
     pacman -Su --noconfirm && \
     pacman -S --noconfirm \
-    xorg-server xorg-server-xvfb x11vnc \
+    xorg-server xorg-server-xvfb xorg-xdpyinfo x11vnc \
     chromium ttf-liberation ttf-dejavu \
     python python-pip \
     supervisor \
