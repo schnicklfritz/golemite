@@ -1,9 +1,9 @@
-k#!/bin/bash
+#!/bin/bash
 # 1. Enforce preferences
 python /home/golem/scripts/configure_chromium.py
 
 # 2. Build Flags
-FLAGS="--no-sandbox --disable-gpu --no-first-run --user-data-dir=/home/golem/.config/chromium"
+FLAGS="--no-sandbox --disable-gpu --no-first-run --user-data-dir=/home/golem/.config/chromium --disable-dev-shm-usage"
 
 # 3. Kiosk vs Desktop Logic
 if [ "$DESKTOP_ENV" == "openbox" ]; then
