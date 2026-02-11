@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-DOWNLOAD_DIR = "/home/golem/Downloads"
+DOWNLOAD_DIR = "/workspace"
 RCLONE_REMOTE = "b2:my-golem-bucket/incoming"
 
 def upload_file(filepath):
