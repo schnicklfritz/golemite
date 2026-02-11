@@ -4,8 +4,15 @@
 # Zero Config assumption: The user wants files in /workspace (Standard for QuickPod/RunPod)
 TARGET_DIR="${DOWNLOAD_DIR:-/workspace}"
 
-if [ ! -d "$TARGET_DIR" ]; then
-    # Create it silently if missing
+# If we are root, ensure the target directory is owned by the golem user
+if [ "$(id -u)" -eq 0 ]; then
+    if [ ! -d "$TARGET_DIR" ]; then
+        mkdir -p "$TARGET_DIR"
+    fi
+    # Recursively fix ownership so the 'golem' user can actually write files there
+    chown -R golem:golem "$TARGET_DIR" /home/golem
+else
+    # If we are already non-root, just try to create it
     mkdir -p "$TARGET_DIR"
 fi
 
