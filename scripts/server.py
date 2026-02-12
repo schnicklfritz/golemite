@@ -3,51 +3,50 @@ import json
 import http.server
 import socketserver
 import urllib.parse
-from pathlib import Path
+import sys
 
 PORT = 8000
 DIRECTORY = "/workspace"
 
+# Grandmaster Fix: Ensure directory exists so it doesn't crash
+if not os.path.exists(DIRECTORY):
+    os.makedirs(DIRECTORY, exist_ok=True)
+
 class GolemHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # Fix: Add CORS to allow requests from anywhere
+        self.send_header('Access-Control-Allow-Origin', '*')
+        http.server.SimpleHTTPRequestHandler.end_headers(self)
+
     def do_GET(self):
-        # 1. API: Get Latest File
+        # API: Latest File
         if self.path == '/api/latest':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             
             try:
-                # Find newest file in workspace (excluding hidden/.tmp)
+                # Get files, sort by time, ignore hidden/.tmp
                 files = [os.path.join(DIRECTORY, f) for f in os.listdir(DIRECTORY)]
                 files = [f for f in files if os.path.isfile(f) and not f.endswith('.tmp') and not os.path.basename(f).startswith('.')]
                 
                 if not files:
-                    self.wfile.write(json.dumps({"error": "No files found"}).encode())
-                    return
-
-                newest = max(files, key=os.path.getmtime)
-                filename = os.path.basename(newest)
-                
-                response = {"filename": filename}
-                self.wfile.write(json.dumps(response).encode())
+                    self.wfile.write(json.dumps({"error": "No files found in workspace"}).encode())
+                else:
+                    newest = max(files, key=os.path.getmtime)
+                    filename = os.path.basename(newest)
+                    self.wfile.write(json.dumps({"filename": filename}).encode())
             except Exception as e:
                 self.wfile.write(json.dumps({"error": str(e)}).encode())
             return
 
-        # 2. Standard Download
-        # Ensure we serve from workspace
-        if self.path.startswith('/'):
-            # Security: Prevent traversing up
-            safe_path = os.path.normpath(DIRECTORY + urllib.parse.unquote(self.path))
-            if not safe_path.startswith(DIRECTORY):
-                self.send_error(403, "Access Denied")
-                return
-            
-            # Map request to directory
-            self.directory = DIRECTORY
-            return http.server.SimpleHTTPRequestHandler.do_GET(self)
+        # Normal File Serving
+        self.directory = DIRECTORY
+        return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
-print(f"🚀 Golem Smart Server running on port {PORT}")
+print(f"🚀 Golem Server active. Root: {DIRECTORY}, Port: {PORT}")
 os.chdir(DIRECTORY)
+# Fix: Allow reuse of address to prevent "Port already in use" on restarts
+socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(("", PORT), GolemHandler) as httpd:
     httpd.serve_forever()

@@ -42,11 +42,45 @@ USER golem
 EXPOSE 6080 5900 8000
 ENTRYPOINT ["/home/golem/scripts/entrypoint.sh"]
 
-# DESKTOP Build
+# ==========================================
+# 3. BUILD B: GOLEM DESKTOP (The "Gentoo" Build)
+# ==========================================
 FROM base AS desktop
-RUN pacman -S --noconfirm fluxbox rclone zenity unzip wget python-setuptools xterm && pacman -Scc --noconfirm
+
+# Install Power User Tools
+# Added: 'dbus', 'mesa' (Fixes DRI/GUI errors), 'libnotify'
+RUN pacman -S --noconfirm \
+    fluxbox \
+    rclone \
+    zenity \
+    unzip \
+    wget \
+    python-setuptools \
+    xterm \
+    dbus \
+    mesa \
+    libnotify \
+    && pacman -Scc --noconfirm
+
+# Install UV & Watchdog
 RUN pip install --break-system-packages uv watchdog
-ENV DESKTOP_ENV=fluxbox WM_COMMAND=fluxbox SETUP_WIZARD=true
+
+# Generate Machine ID (Fixes "Machine ID" error)
+RUN dbus-uuidgen > /etc/machine-id
+
+# Set Envs for Advanced Mode
+ENV DESKTOP_ENV=fluxbox \
+    SETUP_WIZARD=true \
+    WM_COMMAND=fluxbox
+
+# Copy Scripts (Ensure these exist locally!)
+COPY --chown=golem:golem scripts/panic_button.sh /home/golem/scripts/
+COPY --chown=golem:golem scripts/setup_wizard.sh /home/golem/scripts/
+# Copy the Server script (Crucial for Node "Auto" mode)
+COPY --chown=golem:golem scripts/server.py /home/golem/scripts/
+
+RUN chmod +x /home/golem/scripts/*.sh && chmod +x /home/golem/scripts/*.py
+
 USER golem
 EXPOSE 6080 5900 8000
 ENTRYPOINT ["/home/golem/scripts/entrypoint.sh"]
